@@ -1,0 +1,14 @@
+{
+  "papers": [
+    {
+      "title": "EasyV2V: A High-quality Instruction-based Video Editing Framework",
+      "link": "https://arxiv.org/abs/2512.16920v1",
+      "category": "cs.AI"
+    },
+    {
+      "title": "Full System Architecture Modeling for Wearable Egocentric Contextual AI",
+      "link": "https://arxiv.org/abs/2512.16045v1",
+      "category": "cs.AR"
+    }
+  ]
+}

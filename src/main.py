@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from routers.Healthy_Check import healthy_check_router
+from routes import healthy_check_router, upload_data_router
 from helpers.config import get_settings
 
 app = FastAPI()
@@ -21,3 +21,4 @@ async def shutdown_app():
 
 
 app.include_router(healthy_check_router)
+app.include_router(upload_data_router)

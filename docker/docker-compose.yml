@@ -1,0 +1,42 @@
+services:
+  mongodb:
+    image: mongo:7-jammy
+    
+    container_name: MirathMongoDB
+    
+    ports:
+      - "27017:27017"
+    
+    volumes:
+      - ./mongodata:/data/db
+    
+    networks:
+      - backend
+    
+    restart: always
+
+  app:
+    build: 
+
+      context: ..
+      dockerfile: docker/Dockerfile
+
+    container_name: MirathApp
+
+    environment:
+      - CONNECTION_URL=${CONNECTION_URL}
+      - DATABASE_NAME=${DATABASE_NAME}
+
+    ports:
+      - "5000:5000"
+
+    networks:
+      - backend
+
+    depends_on:
+      - mongodb
+
+    restart: always
+
+networks:
+  backend:

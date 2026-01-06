@@ -16,11 +16,14 @@ class settings(BaseSettings):
 
     INPUT_DAFAULT_MAX_CHARACTERS: int
     GENERATION_DAFAULT_MAX_TOKENS: int
-    GENERATION_DAFAULT_TEMPERATURE: int
+    GENERATION_DAFAULT_TEMPERATURE: float
 
     GENERATION_BACKEND: str
     EMBEDDING_BACKEND: str
 
+    QDRANT_URL: str
+    DISTANCE_METHOD: str
+    VECTOR_DB_BACKEND: str
     
     class Config:
         env_file = ".env"

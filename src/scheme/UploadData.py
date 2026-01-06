@@ -5,12 +5,13 @@ from bson.objectid import ObjectId
 
 class UploadData(BaseModel):
 
-    id: Optional[ObjectId] = Field(None, alias="_id")
+    mongo_id: Optional[ObjectId] = Field(None, alias="_id")
+    id: str
     title: str
     authors: List[str]
     citation: str
     publishedAt: str
-    category: List[str]
+    categories: List[str]
     abstract: str
 
     class Config:

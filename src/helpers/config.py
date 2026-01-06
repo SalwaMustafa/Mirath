@@ -21,6 +21,9 @@ class settings(BaseSettings):
     GENERATION_BACKEND: str
     EMBEDDING_BACKEND: str
 
+    QDRANT_URL: str
+    DISTANCE_METHOD: str
+    VECTOR_DB_BACKEND: str
     
     class Config:
         env_file = ".env"

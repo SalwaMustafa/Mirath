@@ -1,1 +1,1 @@
-from .LLMEnums import CohereEnums
+from .LLMEnums import CohereEnums, DocumentTypeEnum

@@ -3,7 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from routes import healthy_check_router, upload_data_router
 from llm.LLMProviderFactory import LLMProviderFactory
 from helpers.config import get_settings
-
+from vectordb.VectorDBFactory import VectorDBFactory
 app = FastAPI()
 
 @app.on_event("startup")
@@ -21,11 +21,15 @@ async def startup_app():
         embedding_size = settings.EMBEDDING_MODEL_SIZE 
     )
 
+    vector_db_factory = VectorDBFactory(config = settings)
+    app.vector_db_client = vector_db_factory.create(provider=settings.VECTOR_DB_BACKEND)
+    app.vector_db_client.connect()
 
 
 @app.on_event("shutdown")
 async def shutdown_app():
     app.mongo_conn.close()
+    app.vector_db_client.disconnect()
 
 
 app.include_router(healthy_check_router)

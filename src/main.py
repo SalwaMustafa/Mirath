@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from routes import healthy_check_router, upload_data_router
+from routes import healthy_check_router, data_router, search_router
 from llm.LLMProviderFactory import LLMProviderFactory
 from helpers.config import get_settings
 from vectordb.VectorDBFactory import VectorDBFactory
 app = FastAPI()
+
 
 @app.on_event("startup")
 async def startup_app():
@@ -33,4 +34,5 @@ async def shutdown_app():
 
 
 app.include_router(healthy_check_router)
-app.include_router(upload_data_router)
+app.include_router(data_router)
+app.include_router(search_router)

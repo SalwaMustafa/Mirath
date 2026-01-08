@@ -22,4 +22,12 @@ class DoUpload(BaseModel):
     file: str
     survey: Optional[bool] = False
 
+class DeleteIDs(BaseModel):
+
+    ids: List[str]
+
+class CreateData(BaseModel):
+
+    papers: List[UploadData]
+
     

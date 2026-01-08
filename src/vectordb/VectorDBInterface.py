@@ -28,6 +28,10 @@ class VectorDBInterface(ABC):
         pass
 
     @abstractmethod
+    def delete_records(self, collection_name:str, ids: List[str])->bool:
+        pass
+
+    @abstractmethod
     def create_collection(self, collection_name:str, embedding_size:int, do_reset:bool=False):
         pass
 

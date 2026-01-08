@@ -9,14 +9,17 @@ from .NLPController import NLPController
 
 class UploadDataController:
 
-    def __init__(self, file, db_client, survey=False):
+    def __init__(self, file, db_client, vector_db_client, embedding_client, survey=False):
         self.base_dir = os.path.dirname(os.path.dirname(__file__))
         self.file_path = os.path.join(self.base_dir, "assets", "data", file)
         self.db_client = db_client
         self.survey = survey
-
+        self.embedding_client = embedding_client
+        self.vector_db_client = vector_db_client
         self.nlp_controller = NLPController(
             db_client=self.db_client,
+            embedding_client=self.embedding_client,
+            vector_db_client=self.vector_db_client,
             survey=self.survey
         )
 

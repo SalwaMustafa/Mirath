@@ -1,7 +1,7 @@
-from VectorDBInterface import VectorDBInterface
+from ..VectorDBInterface import VectorDBInterface
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.models import PointIdsList
-from VectorDBEnum import Distance
+from ..VectorDBEnum import Distance
 import logging
 from typing import List
 

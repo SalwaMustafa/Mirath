@@ -2,6 +2,8 @@ from ..LLMInterface import LLMInterface
 from ..LLMEnums import CohereEnums, DocumentTypeEnum
 import cohere
 import logging
+from typing import List
+import re
 
 class CohereProvider(LLMInterface):
 
@@ -31,7 +33,13 @@ class CohereProvider(LLMInterface):
         self.embedding_size = embedding_size
 
     def process_text(self, text: str):
-        return text[:self.default_input_max_characters].strip()
+
+        text = re.sub(r'\$.*?\$', '', text)
+        text = " ".join(text.split())
+        text = re.sub(r'[^\w\s.,;:?!-]', '', text)
+        text = text[:self.default_input_max_characters]
+
+        return text.strip()
 
 
     def generate_text(self, prompt: str, chat_history: list=[], max_output_tokens: int=None,
@@ -63,7 +71,7 @@ class CohereProvider(LLMInterface):
         return response.text
     
 
-    def embed_text(self, text: str, document_type: str = None):
+    def embed_text(self, texts: List[str], document_type: str = None):
 
         if not self.cohere_client:
             self.logger.error("CoHere client was not set")
@@ -78,7 +86,7 @@ class CohereProvider(LLMInterface):
         embedding_text = self.cohere_client.embed(
                          model = self.embedding_model,
                          input_type = input_type,
-                         texts=[self.process_text(text)],
+                         texts=[self.process_text(text) for text in texts],
                          embedding_types=["float"])
         
 
@@ -87,7 +95,7 @@ class CohereProvider(LLMInterface):
             self.logger.error("The cohere embedding response is empty")
             return None
         
-        return embedding_text.embeddings.float[0]
+        return embedding_text.embeddings.float
     
 
     def construct_prompt(self, prompt: str, role: str):

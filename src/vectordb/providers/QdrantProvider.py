@@ -1,5 +1,6 @@
 from VectorDBInterface import VectorDBInterface
 from qdrant_client import QdrantClient, models
+from qdrant_client.http.models import PointIdsList
 from VectorDBEnum import Distance
 import logging
 from typing import List
@@ -36,6 +37,17 @@ class QdrantProvider(VectorDBInterface):
     def delete_collection(self, collection_name:str)->bool:
         if self.is_collection_exists(collection_name):
             _ = self.qdrant_client.delete_collection(collection_name=collection_name)
+            return True
+        
+        self.logger.error(f"Collection {collection_name} does not exist.")
+        return False
+    
+    def delete_records(self, collection_name:str, ids: List[str])->bool:
+        if self.is_collection_exists(collection_name):
+            _ = self.qdrant_client.delete(
+                collection_name=collection_name,
+                points_selector=PointIdsList(points = ids)
+                )
             return True
         
         self.logger.error(f"Collection {collection_name} does not exist.")

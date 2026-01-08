@@ -28,6 +28,6 @@ class DeleteIDs(BaseModel):
 
 class CreateData(BaseModel):
 
-    papers: List[UploadData]
+    papers: List[dict]
 
     

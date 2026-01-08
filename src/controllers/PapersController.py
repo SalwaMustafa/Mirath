@@ -7,13 +7,17 @@ from .NLPController import NLPController
 
 class PapersController:
 
-    def __init__(self, db_client, vector_db_client):
+    def __init__(self, db_client, vector_db_client, embedding_client):
         
         self.db_client = db_client
         self.vector_db_client = vector_db_client
+        self.embedding_client = embedding_client
         self.collection = self.db_client[DatabaseEnum.RESEARCH_COLLECTION_NAME.value]
 
-        self.nlp_controller = NLPController(db_client = self.db_client)
+        self.nlp_controller = NLPController(db_client = self.db_client, 
+                                            embedding_client = self.embedding_client,
+                                            vector_db_client = self.vector_db_client,
+                                            survey = False)
 
         self.logger = logging.getLogger(__name__)
 
@@ -60,13 +64,12 @@ class PapersController:
                 await self.collection.insert_one(
                     validated_data.dict(by_alias=True, exclude_unset=True)
                 )
-
+                
                 created_ids.append(data.get("id"))
                 qdrant_data.append(data)
             except Exception as e:
                 self.logger.error(f"Error while adding paper in mongo database {data.get('id')}: {e}")
                 failed.append(data.get("id"))
-
         
         signal, _ = await self.nlp_controller.index_into_qdrantdb(
             collection_name = DatabaseEnum.RESEARCH_COLLECTION_NAME.value, 

@@ -12,10 +12,18 @@ data_router = APIRouter()
 async def upload_researches(request: Request, do_upload: DoUpload):
     
     db_client = request.app.db_client
+    embedding_client = request.app.embedding_client
+    vector_db_client = request.app.vector_db_client
     file =  do_upload.file
     survey = do_upload.survey
 
-    upload_data_controller = UploadDataController(file = file, db_client = db_client, survey = survey)
+    upload_data_controller = UploadDataController(
+        file = file, 
+        db_client = db_client, 
+        cohere_provider=embedding_client, 
+        qdrant_provider=vector_db_client, 
+        survey = survey
+        )
 
     counter, message_from_mongo, message_from_qdrant  = await upload_data_controller.upload_data()
 
@@ -41,7 +49,13 @@ async def upload_researches(request: Request, do_upload: DoUpload):
 async def delete_researches(request: Request, ids_to_delete: DeleteIDs):
 
     db_client = request.app.db_client
-    papers_controller = PapersController(db_client=db_client)
+    embedding_client = request.app.embedding_client
+    vector_db_client = request.app.vector_db_client
+    papers_controller = PapersController(
+        db_client = db_client,
+        vector_db_client = vector_db_client,
+        embedding_client = embedding_client
+        )
 
     result_from_qdrant, not_found_ids, message = await papers_controller.delete_papers(
         ids=ids_to_delete.ids
@@ -67,14 +81,22 @@ async def delete_researches(request: Request, ids_to_delete: DeleteIDs):
 
 
 
-@data_router.post("create/papers", status_code=status.HTTP_201_CREATED)
+@data_router.post("/create/papers")
 async def create_researches(request: Request, papers_to_create: CreateData):
 
     db_client = request.app.db_client
-    papers_controller = PapersController(db_client=db_client)
+    embedding_client = request.app.embedding_client
+    vector_db_client = request.app.vector_db_client
+    papers = papers_to_create.papers
+    papers_controller = PapersController(
+        db_client = db_client,
+        vector_db_client = vector_db_client,
+        embedding_client = embedding_client
+        )
+
 
     result_from_qdrant, failed_ids, message = await papers_controller.create_papers(
-        data_list=papers_to_create.data
+        data_list=papers
     )
 
     status_code = (

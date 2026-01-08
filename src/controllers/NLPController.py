@@ -7,6 +7,9 @@ from llm import DocumentTypeEnum
 from vectordb.providers import QdrantProvider
 import logging
 from enums.ResponseEnum import ResponseEnum
+from typing import List
+from scheme import UploadData
+import json
 
 class NLPController:
 
@@ -24,34 +27,46 @@ class NLPController:
         
         self.logger = logging.getLogger(__name__)
 
-    async def embed_papers(self, page_no:int=1, page_size:int=25):
-            records = await (
-                self.collection
-                .find()
-                .skip((page_no - 1) * page_size)
-                .limit(page_size)
-                .to_list(length=None))
+    async def embed_papers(self, data: List[dict], batch_size: int = 25):
+        
+        ids, texts, vectors, metadatas = [], [], [], []
+        validated_data = []
+        for record in data:
+            try:
+                record = UploadData(**record)
+                validated_data.append(record.dict(by_alias=True, exclude_unset=True))
 
-            ids, texts, vectors, metadatas = [], [], [], []
+            except Exception as e:
+                self.logger.error(f"Error while validate data: {e}")
 
-            for record in records:
-                embedding_response = self.cohere_provider.embed_text(text = record["abstract"], 
-                                                                     document_type = DocumentTypeEnum.DOCUMENT.value)
-                
-                if embedding_response is None:
-                     continue
-                
-                vectors.extend(embedding_response)
-                ids.append(record["id"])
-                texts.append(record["abstract"])
-                metadatas.append({
-                    "title": record["title"],
-                    "categories":record["categories"]})
-                
-            return ids, texts, vectors, metadatas
+            
+        all_abstracts = [record["abstract"] for record in validated_data]
+        all_ids = [record["id"] for record in validated_data]
+        all_metadatas = [{"title": record["title"], "categories": record["categories"]} for record in validated_data]
+
+        for i in range(0, len(all_abstracts), batch_size):
+            batch_texts = all_abstracts[i:i+batch_size]
+            batch_ids = all_ids[i:i+batch_size]
+            batch_metadatas = all_metadatas[i:i+batch_size]
+
+            embedding_response = self.cohere_provider.embed_text(
+                texts=batch_texts,
+                document_type=DocumentTypeEnum.DOCUMENT.value
+            )
+
+            if embedding_response is None:
+                continue  
+
+            vectors.extend(embedding_response)
+            ids.extend(batch_ids)
+            texts.extend(batch_texts)
+            metadatas.extend(batch_metadatas)
+
+        return ids, texts, vectors, metadatas
+
     
-    async def index_into_qdrantdb(self,collection_name:str, do_reset:bool=False):
-        ids, texts, vectors, metadatas = await self.embed_papers()
+    async def index_into_qdrantdb(self,collection_name: str, data: List[dict], do_reset: bool = False):
+        ids, texts, vectors, metadatas = await self.embed_papers(data = data)
 
         _= self.qdrant_provider.create_collection(
              collection_name=collection_name,
@@ -59,36 +74,34 @@ class NLPController:
              do_reset=do_reset
         )
 
-        signal = await asyncio.to_thread(
-              self.qdrant_provider.insert_many(
-              collection_name=collection_name,
-              texts=texts,
-              vectors=vectors,
-              metadatas=metadatas,
-              record_ids=ids
-              ))
+        signal = self.qdrant_provider.insert_many(
+              collection_name = collection_name,
+              texts = texts,
+              vectors = vectors,
+              metadatas = metadatas,
+              record_ids = ids
+              )
         
         if not signal:
             self.logger.error("Error inserting data into Qdrant vector database.")
-            return ResponseEnum.VECTOR_DB_INSERTION_ERROR.value
+            return False, ResponseEnum.VECTOR_DB_INSERTION_ERROR.value
         
-        return ResponseEnum.VECTOR_DB_INSERTION_SUCCESS.value
-         
+        return True, ResponseEnum.VECTOR_DB_INSERTION_SUCCESS.value
          
          
     
+    async def search_into_vector_db(self, collection_name: str, question: str, limit: int = 5):
 
-    
-                
-             
-                
+        embedding_response = self.cohere_provider.embed_text(
+                texts=[question],
+                document_type=DocumentTypeEnum.QUERY.value
+            )
 
-
-                 
-                
-
-
+        answers = self.qdrant_provider.search_by_vector(
+            collection_name = collection_name, 
+            vector = embedding_response[0], 
+            limit = limit
+            )
         
-
-
-       
+        return json.loads(json.dumps(answers, default = lambda o: o.__dict__))
+    

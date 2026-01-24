@@ -20,8 +20,8 @@ async def upload_researches(request: Request, do_upload: DoUpload):
     upload_data_controller = UploadDataController(
         file = file, 
         db_client = db_client, 
-        cohere_provider=embedding_client, 
-        qdrant_provider=vector_db_client, 
+        embedding_client=embedding_client, 
+        vector_db_client=vector_db_client, 
         survey = survey
         )
 

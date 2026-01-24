@@ -93,12 +93,16 @@ class NLPController:
                 texts=[question],
                 document_type=DocumentTypeEnum.QUERY.value
             )
+        if embedding_response is None:
+            return None
 
         answers = self.vector_db_client.search_by_vector(
             collection_name = collection_name, 
             vector = embedding_response[0], 
             limit = limit
             )
-        
-        return json.loads(json.dumps(answers, default = lambda o: o.__dict__))
+
+        answers =  json.loads(json.dumps(answers, default = lambda o: o.__dict__))
+
+        return [answers["points"][i]["id"] for i in range(len(answers["points"]))]
     

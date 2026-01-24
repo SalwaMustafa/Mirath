@@ -3,7 +3,7 @@ from enum import Enum
 class ResponseEnum(Enum):
 
     DATAUPLOAD_SUCCESS = "Data uploaded successfully."
-    DATAUPLOAD_FAILURE = "Data upload completed with some errors."
+    DATAUPLOAD_FAILURE = "Unable to upload some records."
     INVALID_FILE_FORMAT = "Unsupported file format."
     VECTOR_DB_INSERTION_ERROR = "Error inserting data into vector database."
     VECTOR_DB_INSERTION_SUCCESS = "Data inserted into vector database successfully."
@@ -15,6 +15,4 @@ class ResponseEnum(Enum):
     PAPER_UPDATED_SUCCESSFULLY = "Paper updated successfully"
     NO_CHANGES_MADE = "No changes were made"
     PAPER_UPDATE_FAILURE = "Cannot update this paper"
-
-
-    
+    CANNOT_EMBED_TEXT = "Cannot embed the provided text."  

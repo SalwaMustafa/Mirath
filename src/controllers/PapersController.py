@@ -33,6 +33,7 @@ class PapersController:
     async def delete_papers(self, ids: List[str]):
         existing_status = await self.are_papers_exist(ids)
         existing_ids = [id for id, exists in existing_status.items() if exists]
+        result_from_qdrant = False
 
         if existing_ids:
 
@@ -61,12 +62,16 @@ class PapersController:
         for data in data_list:
             try:
                 validated_data = UploadData(**data)
-                await self.collection.insert_one(
-                    validated_data.dict(by_alias=True, exclude_unset=True)
+                doc_dict = validated_data.dict(by_alias=True, exclude_unset=True)
+
+                await self.collection.update_one(
+                    {"id": doc_dict["id"]},  
+                    {"$set": doc_dict},    
+                    upsert=True
                 )
                 
-                created_ids.append(data.get("id"))
-                qdrant_data.append(data)
+                created_ids.append(doc_dict.get("id"))
+                qdrant_data.append(doc_dict)
             except Exception as e:
                 self.logger.error(f"Error while adding paper in mongo database {data.get('id')}: {e}")
                 failed.append(data.get("id"))

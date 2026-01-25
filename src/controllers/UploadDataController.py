@@ -89,6 +89,10 @@ class UploadDataController:
         try:
             validated_data = await self.load_and_validate_file()
 
+            if validated_data == []:
+                self.logger.error("No valid data to upload")
+                return self.failed_records, ResponseEnum.DATAUPLOAD_FAILURE.value, None
+            
             signal, message = await self.nlp_controller.index_into_qdrantdb(
                 collection_name=self.qdrant_collection_name,
                 data=validated_data

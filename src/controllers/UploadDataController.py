@@ -91,7 +91,7 @@ class UploadDataController:
 
             if validated_data == []:
                 self.logger.error("No valid data to upload")
-                return self.failed_records, ResponseEnum.DATAUPLOAD_FAILURE.value, None
+                return self.failed_records, ResponseEnum.DATAUPLOAD_FAILURE.value, ResponseEnum.VECTOR_DB_INSERTION_ERROR.value
             
             signal, message = await self.nlp_controller.index_into_qdrantdb(
                 collection_name=self.qdrant_collection_name,
@@ -108,5 +108,5 @@ class UploadDataController:
 
         except Exception as e:
             self.logger.error(f"Upload pipeline failed: {e}")
-            return self.failed_records, ResponseEnum.DATAUPLOAD_FAILURE.value, None
+            return self.failed_records, ResponseEnum.DATAUPLOAD_FAILURE.value, ResponseEnum.VECTOR_DB_INSERTION_ERROR.value
 

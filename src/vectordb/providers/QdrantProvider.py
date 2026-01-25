@@ -8,9 +8,10 @@ from typing import List
 
 class QdrantProvider(VectorDBInterface):
 
-    def __init__(self, qdrant_url:str,distance):
+    def __init__(self, qdrant_url:str, qdrant_path: str,distance):
         
         self.qdrant_url = qdrant_url
+        self.qdrant_path = qdrant_path
         self.qdrant_client = None
         if distance == Distance.COSINE.value:
             self.distance = models.Distance.COSINE
@@ -20,7 +21,10 @@ class QdrantProvider(VectorDBInterface):
         self.logger = logging.getLogger(__name__)
 
     def connect(self):
-        self.qdrant_client = QdrantClient(url=self.qdrant_url)
+        if not self.qdrant_url:
+            self.qdrant_client = QdrantClient(path=self.qdrant_path)
+        else:
+            self.qdrant_client = QdrantClient(url=self.qdrant_url)
 
     def disconnect(self):
         self.qdrant_client = None
@@ -53,6 +57,7 @@ class QdrantProvider(VectorDBInterface):
         self.logger.error(f"Collection {collection_name} does not exist.")
         return False
     
+    
     def create_collection(self, collection_name:str, embedding_size:int, do_reset:bool=False):
         if do_reset and self.is_collection_exists(collection_name):
             self.delete_collection(collection_name=collection_name)
@@ -67,6 +72,7 @@ class QdrantProvider(VectorDBInterface):
         return False
     
     def insert_one(self, collection_name:str, text:str, vector:list, metadata:dict=None, record_id:str=None):
+        
         if self.is_collection_exists(collection_name=collection_name):
             try:
                 self.qdrant_client.upload_points(
@@ -82,41 +88,53 @@ class QdrantProvider(VectorDBInterface):
         return False
 
     def insert_many(self, collection_name:str, texts:list, vectors:list, metadatas:list=None,
-                     record_ids:list=None,batch_size:int=25):
-        if self.is_collection_exists(collection_name=collection_name):
+                record_ids:list=None, batch_size:int=25):
+        if not self.is_collection_exists(collection_name=collection_name):
+            self.logger.error(f"Collection {collection_name} does not exist.")
+            return False
 
-            try:
-                for i in range(0, len(texts), batch_size):
-                    batch_texts = texts[i:i+batch_size]
-                    batch_vectors = vectors[i:i+batch_size]
-                    batch_metadatas = metadatas[i:i+batch_size] if metadatas else [None]*len(batch_texts)
-                    batch_record_ids = record_ids[i:i+batch_size] if record_ids else [None]*len(batch_texts)
+        try:
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i+batch_size]
+                batch_vectors = vectors[i:i+batch_size]
+                batch_metadatas = metadatas[i:i+batch_size] if metadatas else [None]*len(batch_texts)
+                batch_record_ids = record_ids[i:i+batch_size] if record_ids else [None]*len(batch_texts)
 
-                    points = [
-                        models.PointStruct(
-                            id=batch_record_ids[j],
-                            vector=batch_vectors[j],
-                            payload={
-                                "text": batch_texts[j],
-                                "metadata": batch_metadatas[j]
-                            }
-                        )
-                        for j in range(len(batch_texts))
-                    ]
+                existing_points = self.qdrant_client.retrieve(
+                    collection_name=collection_name,
+                    ids=batch_record_ids
+                )
+                existing_ids = {point.id for point in existing_points}
 
+                points = [
+                    models.PointStruct(
+                        id=batch_record_ids[j],
+                        vector=batch_vectors[j],
+                        payload={
+                            "text": batch_texts[j],
+                            "metadata": batch_metadatas[j]
+                        }
+                    )
+                    for j in range(len(batch_texts))
+                    if batch_record_ids[j] not in existing_ids
+                
+                ]
+
+
+                if points:  
                     self.qdrant_client.upload_points(
                         collection_name=collection_name,
                         points=points
                     )
+                else:
+                    self.logger.error("All points in this batch already exist. Skipping insertion.")
 
-                return True
+            return True
 
-            except Exception as e:
-                self.logger.error(f"Error inserting points: {e}")
-                return False
-            
-        self.logger.error(f"Collection {collection_name} does not exist.")
-        return False
+        except Exception as e:
+            self.logger.error(f"Error inserting points: {e}")
+            return False
+        
     
     def search_by_vector(self, collection_name:str, vector:list, limit:int=5):
         return self.qdrant_client.query_points(

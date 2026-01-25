@@ -61,7 +61,7 @@ async def delete_researches(request: Request, ids_to_delete: DeleteIDs):
         ids=ids_to_delete.ids
     )
 
-    if not result_from_qdrant and not_found_ids:
+    if not_found_ids:
         status_code = status.HTTP_404_NOT_FOUND
     else:
         status_code = status.HTTP_200_OK

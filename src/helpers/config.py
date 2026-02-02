@@ -24,6 +24,8 @@ class settings(BaseSettings):
     QDRANT_URL: str
     DISTANCE_METHOD: str
     VECTOR_DB_BACKEND: str
+
+    TAVILY_API_KEY: str
     
     class Config:
         env_file = ".env"

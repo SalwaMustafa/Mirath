@@ -4,6 +4,10 @@ from routes import healthy_check_router, data_router, search_router
 from llm.LLMProviderFactory import LLMProviderFactory
 from helpers.config import get_settings
 from vectordb.VectorDBFactory import VectorDBFactory
+from langgraph.checkpoint.mongodb import MongoDBSaver
+from enums import DatabaseEnum
+
+
 app = FastAPI()
 
 
@@ -15,6 +19,7 @@ async def startup_app():
     
     app.mongo_conn = AsyncIOMotorClient(settings.CONNECTION_URL)
     app.db_client = app.mongo_conn[settings.DATABASE_NAME]
+    app.chat_history = app.db_client[DatabaseEnum.CHAT_HISTORY.value]
 
     app.embedding_client = llm_provider_factory.get_llm(provider = settings.EMBEDDING_BACKEND)
     app.embedding_client.set_embedding_model(

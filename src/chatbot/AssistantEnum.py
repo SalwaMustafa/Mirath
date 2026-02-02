@@ -1,0 +1,12 @@
+from enum import Enum
+
+class AssistantEnum(Enum):
+    
+    GENERAL_ASSISTANT = "GENERAL_ASSISTANT"
+    GENERATE_ROADMAP = "GENERATE_ROADMAP"
+    WAIT_USER = "WAIT_USER"
+    ROADMAP_GENERATOR = "ROADMAP_GENERATOR"
+    REFLEXION = "REFLEXION"
+    PASS = "PASS"
+    RETRY = "RETRY"
+    END = "END"

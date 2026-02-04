@@ -42,6 +42,7 @@ class ExtractionSchema(BaseModel):
         description="Preferred language", 
         default="English"
     ) 
+    notable_publications: Optional[List[str]] = Field(description="List of user's notable publications", default = None)
 
 
 class RouteQuery(BaseModel):

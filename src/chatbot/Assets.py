@@ -1,9 +1,19 @@
 from langchain_community.utilities import ArxivAPIWrapper
 from langchain_community.tools import ArxivQueryRun
-from langchain_community.tools import TavilySearch
+from langchain_tavily import TavilySearch
 from helpers.config import get_settings
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 settings = get_settings()
+
+def get_model():
+    llm = ChatGoogleGenerativeAI(
+    model = settings.GENERATION_MODEL_ID, 
+    temperature = settings.GENERATION_DAFAULT_TEMPERATURE,
+    google_api_key = settings.GEMINI_API_KEY
+    )
+    return llm
+
 
 def get_arxiv_tool():
     wrapper = ArxivAPIWrapper(

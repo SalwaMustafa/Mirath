@@ -1,17 +1,17 @@
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.prebuilt import ToolNode
-from AssistantScheme import UserProfile, RoadmapRequirements, ExtractionSchema, RouteQuery, EvaluationResult, AgentState
-from AssistantPrompts import ROUTER_SYSTEM_MESSAGE, GENERAL_ASSISTANT_PROMPT, ROADMAP_GUARDIAN_PROMPT, ROADMAP_SYSTEM_PROMPT, REFLEXION_ROADMAP_PROMPT, REFLEXION_GENERAL_PROMPT
-from AssistantEnum import AssistantEnum
-from Assets import get_research_tools
+from .AssistantScheme import UserProfile, RoadmapRequirements, ExtractionSchema, RouteQuery, EvaluationResult, AgentState
+from .AssistantPrompts import ROUTER_SYSTEM_MESSAGE, GENERAL_ASSISTANT_PROMPT, ROADMAP_GUARDIAN_PROMPT, ROADMAP_SYSTEM_PROMPT, REFLEXION_ROADMAP_PROMPT, REFLEXION_GENERAL_PROMPT
+from .AssistantEnum import AssistantEnum
+from .Assets import get_research_tools, get_model
 import asyncio
 
 class AssistantGraph:
 
-    def __init__(self, llm, memory, sleep_time: int = 20):
+    def __init__(self, memory, sleep_time: int = 45):
 
-        self.llm = llm
+        self.llm = get_model()
         self.memory = memory
         self.sleep_time = sleep_time
         self.assistant_graph = self._create_workflow()
@@ -76,7 +76,13 @@ class AssistantGraph:
 
        
         extractor = self.llm.with_structured_output(ExtractionSchema)
-        messages = ROADMAP_GUARDIAN_PROMPT.format_messages(messages = state.get("messages", []))
+        messages = ROADMAP_GUARDIAN_PROMPT.format_messages(
+            topic=current_reqs.topic,
+            level=current_profile.research_level,
+            time_frame=current_reqs.time_frame,
+            field=current_profile.field_of_interest or "Not specified",
+            messages = state.get("messages", []))
+        
         extraction = await extractor.ainvoke(messages) or ExtractionSchema()
         await asyncio.sleep(self.sleep_time)
         
@@ -198,7 +204,8 @@ class AssistantGraph:
         
         feedback_msg = f"Reflexion Reasoning: {eval_result.reasoning} and Feedback: {eval_result.feedback}."
         return {
-            "messages": [HumanMessage(content=feedback_msg)],
+            "messages": [HumanMessage(content=feedback_msg,
+                                      additional_kwargs={"type": "Reflexion"} )],
             "next_step": AssistantEnum.RETRY.value,
             "reflexion_count": state["reflexion_count"] + 1
         }

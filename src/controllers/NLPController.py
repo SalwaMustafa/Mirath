@@ -11,7 +11,9 @@ import json
 
 class NLPController:
 
-    def __init__(self,db_client:str, vector_db_client, embedding_client, survey:bool=False):
+    def __init__(self,db_client:str , vector_db_client = None, embedding_client = None, 
+                 generation_client = None, template_parser = None, survey:bool=False):
+        
         self.db_client = db_client
         self.collection = (
             self.db_client[DatabaseEnum.SURVEY_COLLECTION_NAME.value]
@@ -21,6 +23,8 @@ class NLPController:
         self.settings = get_settings()
         self.vector_db_client = vector_db_client
         self.embedding_client = embedding_client
+        self.generation_client = generation_client
+        self.template_parser = template_parser
         
         self.logger = logging.getLogger(__name__)
 
@@ -106,3 +110,33 @@ class NLPController:
 
         return [answers["points"][i]["id"] for i in range(len(answers["points"]))]
     
+
+
+    async def generate_answer(self, service: str, input_text: str, target_language: str = None):
+
+        key = None
+        system_vars = {}
+
+        if service == "explain":
+            key = "explain_prompt"
+            system_vars = {"input_text": input_text}
+
+        elif service == "summarize_snippet":
+            key = "summary_prompt"
+            system_vars = {"input_text": input_text}
+        
+        elif service == "translate":
+            key = "translate_prompt"
+            system_vars = {"input_text": input_text, "target_language": target_language}
+        else:
+            self.logger.error(f"Invalid service: {service}")
+            return None
+        
+        
+        prompt = self.template_parser.get(service , key, system_vars)
+
+        answer = self.generation_client.generate_text(
+            prompt = prompt
+        )
+
+        return answer

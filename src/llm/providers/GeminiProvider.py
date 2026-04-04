@@ -48,14 +48,16 @@ class GeminiProvider(LLMInterface):
         
         max_output_tokens = max_output_tokens if max_output_tokens else self.default_generation_max_output_tokens
         temperature = temperature if temperature else  self.default_generation_temperature
+
+        grounding_tool = types.Tool(google_search = types.GoogleSearch())
+
+        config = types.GenerateContentConfig(temperature = temperature, tools = [grounding_tool])
         
         response = self.gemini_client.models.generate_content(
                    model = self.generation_model,
                    contents = prompt,
-                   config = types.GenerateContentConfig(
-                             temperature = temperature,
-                             max_output_tokens = max_output_tokens)
-                )
+                   config = config
+                   )
         
         if not response or not response.text:
             self.logger.error("The gemini generation response is empty")

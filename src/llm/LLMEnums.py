@@ -16,3 +16,7 @@ class LLMEnums(Enum):
     GEMINI = "GEMINI"
     COHERE = "COHERE"
 
+class GeminiEnums(Enum):
+
+    DOCUMENT = "RETRIEVAL_DOCUMENT"
+    QUERY = "RETREIVAL_QUERY"

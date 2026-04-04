@@ -16,3 +16,4 @@ class ResponseEnum(Enum):
     NO_CHANGES_MADE = "No changes were made"
     PAPER_UPDATE_FAILURE = "Cannot update this paper"
     CANNOT_EMBED_TEXT = "Cannot embed the provided text."  
+    GENERATION_FAILURE = "Failed to generate a response."

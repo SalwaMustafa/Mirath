@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import List
 
 
 class settings(BaseSettings):
@@ -8,9 +9,12 @@ class settings(BaseSettings):
     DATABASE_NAME: str
 
     COHERE_API_KEY: str
+
+    EMBEDDING_MODEL_ID_LITERAL: List[str] = None
     EMBEDDING_MODEL_ID: str
     EMBEDDING_MODEL_SIZE: int
 
+    GENERATION_MODEL_ID_LITERAL: List[str] = None
     GEMINI_API_KEY: str
     GENERATION_MODEL_ID: str
 
@@ -26,6 +30,9 @@ class settings(BaseSettings):
     VECTOR_DB_BACKEND: str
 
     TAVILY_API_KEY: str
+
+    PRIMARY_LANG: str
+    DEFAULT_LANG: str
     
     class Config:
         env_file = ".env"

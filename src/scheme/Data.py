@@ -30,4 +30,7 @@ class CreateData(BaseModel):
 
     papers: List[dict]
 
+class SaveChatMetadata(BaseModel):
     
+    thread_id: str
+    title: str

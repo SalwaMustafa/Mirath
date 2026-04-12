@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from routes import healthy_check_router, data_router, search_router, init_socket, ai_services_router
+from routes import healthy_check_router, data_router, search_router, init_socket, ai_services_router, socket_app
 from llm.LLMProviderFactory import LLMProviderFactory
 from helpers.config import get_settings
 from vectordb.VectorDBFactory import VectorDBFactory
@@ -11,7 +11,7 @@ from pymongo import MongoClient
 from llm.templates import TemplateParser
 
 app = FastAPI()
-
+app.mount("/socket.io", socket_app)
 
 @app.on_event("startup")
 async def startup_app():

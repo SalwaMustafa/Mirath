@@ -8,6 +8,7 @@ from enums.ResponseEnum import ResponseEnum
 from typing import List
 from scheme import UploadData
 import json
+from helpers import SERVICE_CONFIG
 
 class NLPController:
 
@@ -114,25 +115,17 @@ class NLPController:
 
     async def generate_answer(self, service: str, input_text: str, target_language: str = None):
 
+        config = SERVICE_CONFIG.get(service)
         key = None
         system_vars = {}
 
-        if service == "explain":
-            key = "explain_prompt"
-            system_vars = {"input_text": input_text}
-
-        elif service == "summarize_snippet":
-            key = "summary_prompt"
-            system_vars = {"input_text": input_text}
-        
-        elif service == "translate":
-            key = "translate_prompt"
-            system_vars = {"input_text": input_text, "target_language": target_language}
+        if config:
+            key = config["key"]
+            system_vars = config["vars"](input_text, target_language)
         else:
             self.logger.error(f"Invalid service: {service}")
             return None
-        
-        
+         
         prompt = self.template_parser.get(service , key, system_vars)
 
         answer = self.generation_client.generate_text(

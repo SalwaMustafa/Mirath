@@ -34,6 +34,17 @@ class settings(BaseSettings):
     PRIMARY_LANG: str
     DEFAULT_LANG: str
     
+    GROQ_API_KEY: str
+    TRANSCRIPTION_MODEL_ID: str
+
+    PADDLE_OCR_URL: str
+    PADDLE_OCR_TOKEN: str
+
+    AUDIO_MAX_SIZE: int
+
+    IMAGE_ALLOWED_TYPES: List[str]
+    IMAGE_MAX_SIZE: int 
+
     class Config:
         env_file = ".env"
 

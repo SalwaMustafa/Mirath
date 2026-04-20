@@ -2,6 +2,9 @@ import logging
 from enums import DatabaseEnum
 from scheme import SaveChatMetadata
 from datetime import datetime
+from langchain_core.messages import HumanMessage, AIMessage
+import json
+from enums import ResponseEnum
 
 class ChatController:
     def __init__(self, db_client):
@@ -20,7 +23,8 @@ class ChatController:
         metadata_dict = metadata.dict(by_alias=True, exclude_unset=True)
         await self.chat_metadata_collection.update_one(
             {"thread_id": metadata_dict["thread_id"]},
-            {"$set": {"title": metadata_dict["title"], 
+            {"$set": {"title": metadata_dict["title"],
+                      "user_id": metadata_dict["user_id"], 
                       "created_at": datetime.utcnow()}},
             upsert=True
         )
@@ -43,3 +47,74 @@ class ChatController:
 
         return True
 
+    async def is_chat_exists(self, thread_id: str):
+
+        is_exist = await self.chat_metadata_collection.find_one({"thread_id": thread_id})
+        return is_exist is not None
+    
+
+    async def stream_generator(self,prompt:str, thread_id:str, graph, chat_title:str= None):
+
+        try:
+
+            STREAMING_NODES = {"general_assistant", "roadmap_generator", "roadmap_guardian"}
+            if chat_title:
+                yield f"data: {json.dumps({
+                    'type': 'metadata',
+                    'chat_title': chat_title
+                })}\n\n"
+
+
+            config = {"configurable": {"thread_id": thread_id}}
+
+            async for chunk in graph.astream(
+                {
+                    "messages": [
+                        HumanMessage(
+                            content=prompt,
+                            additional_kwargs={"type": "user_query"},
+                        )
+                    ]
+                },
+                config=config,
+                stream_mode="messages",
+                version="v2"):
+
+                if chunk["type"] != "messages":
+                    continue
+
+                message_chunk, metadata = chunk["data"]
+
+                node_name = metadata.get("langgraph_node", "")
+                if node_name not in STREAMING_NODES:
+                    continue 
+
+                if node_name == "roadmap_guardian":
+                    if not isinstance(message_chunk, AIMessage):
+                        continue
+
+                if hasattr(message_chunk, 'additional_kwargs'):
+                    msg_type = message_chunk.additional_kwargs.get("type", "")
+                    if msg_type == "Reflexion":
+                        continue
+                    
+                if message_chunk.content:
+                    yield f"data: {json.dumps({
+                        'type': 'chunk',
+                        'content': message_chunk.content
+                    })}\n\n"
+
+            yield f"data: {json.dumps({
+                            'type': 'end',
+                            'content': ResponseEnum.STREAMING_SUCCESS.value
+                        })}\n\n"
+
+        except Exception as e:
+            self.logger.error(f"Error during streaming: {e}")
+            yield f"data: {json.dumps({
+                            'type': 'error',
+                            'content': ResponseEnum.STREAMING_FAILURE.value 
+                        })}\n\n"
+
+           
+        

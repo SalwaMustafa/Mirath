@@ -34,3 +34,4 @@ class SaveChatMetadata(BaseModel):
     
     thread_id: str
     title: str
+    user_id: str

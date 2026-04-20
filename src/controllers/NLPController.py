@@ -1,5 +1,4 @@
-import asyncio
-import os
+import base64
 from enums import DatabaseEnum
 from helpers.config import get_settings
 from llm import DocumentTypeEnum
@@ -8,7 +7,9 @@ from enums.ResponseEnum import ResponseEnum
 from typing import List
 from scheme import UploadData
 import json
-from helpers import SERVICE_CONFIG
+from helpers import SERVICE_CONFIG, OCR_CONFIG
+from fastapi import UploadFile
+import requests
 
 class NLPController:
 
@@ -133,3 +134,57 @@ class NLPController:
         )
 
         return answer
+
+
+
+    async def trascribe_audio(self, voice: UploadFile, audio_client):
+        
+        if voice.size > self.settings.AUDIO_MAX_SIZE:
+            self.logger.error(f"Audio file size exceeds the maximum limit of {self.settings.AUDIO_MAX_SIZE} bytes.")
+            return None, ResponseEnum.FILE_TOO_LARGE.value
+        
+        try:
+            audio_bytes = await voice.read()
+
+            transcription = audio_client.audio.transcriptions.create(
+                file=(voice.filename, audio_bytes),
+                model=self.settings.TRANSCRIPTION_MODEL_ID,
+            )
+            return transcription.text, ResponseEnum.TRANSCRIPTION_SUCCESS.value
+        
+        except Exception as e:
+
+            self.logger.error(f"Error during audio transcription: {e}")
+            return None, ResponseEnum.TRANSCRIPTION_FAILURE.value
+
+
+
+    async def extract_text_from_image(self, image: UploadFile):
+
+        if image.content_type not in self.settings.IMAGE_ALLOWED_TYPES:
+            self.logger.error(f"Unsupported image format: {image.content_type}.")
+            return None, ResponseEnum.INVALID_FILE_FORMAT.value  
+        
+        if image.size > self.settings.IMAGE_MAX_SIZE:
+            self.logger.error(f"Image file size exceeds the maximum limit of {self.settings.IMAGE_MAX_SIZE} bytes.")
+            return None, ResponseEnum.FILE_TOO_LARGE.value   
+        
+        try:
+
+            file_bytes = await image.read()
+            file_base64 = base64.b64encode(file_bytes).decode("utf-8")
+  
+            headers = OCR_CONFIG["headers"](self.settings.PADDLE_OCR_TOKEN)
+            payload = OCR_CONFIG["payload"](file_base64)
+
+            response = requests.post(self.settings.PADDLE_OCR_URL, json = payload, headers = headers)
+            result = response.json()
+            result = result["result"]["layoutParsingResults"][0]["markdown"]["text"]
+
+            return result, ResponseEnum.OCR_SUCCESS.value
+        
+        except Exception as e:
+
+            self.logger.error(f"Error during OCR processing: {e}")
+            return None, ResponseEnum.OCR_FAILURE.value
+        

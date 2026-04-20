@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from routes import healthy_check_router, data_router, search_router, init_socket, ai_services_router, socket_app
+from routes import healthy_check_router, data_router, search_router, chat_router, ai_services_router
 from llm.LLMProviderFactory import LLMProviderFactory
 from helpers.config import get_settings
 from vectordb.VectorDBFactory import VectorDBFactory
@@ -9,9 +9,9 @@ from enums import DatabaseEnum
 from chatbot import AssistantGraph
 from pymongo import MongoClient
 from llm.templates import TemplateParser
+from groq import Groq
 
 app = FastAPI()
-app.mount("/socket.io", socket_app)
 
 @app.on_event("startup")
 async def startup_app():
@@ -34,6 +34,8 @@ async def startup_app():
     app.generation_client = llm_provider_factory.get_llm(provider = settings.GENERATION_BACKEND)
     app.generation_client.set_generation_model(model_id = settings.GENERATION_MODEL_ID)
 
+    app.audio_client = Groq(api_key= settings.GROQ_API_KEY)
+
     app.template_parser = TemplateParser(language=settings.PRIMARY_LANG, default_language=settings.DEFAULT_LANG)
 
     vector_db_factory = VectorDBFactory(config = settings)
@@ -41,7 +43,7 @@ async def startup_app():
     app.vector_db_client.connect()
     app.assistant = AssistantGraph(memory=app.chat_history)
     app.assistant_graph = app.assistant.assistant_graph
-    init_socket(app)
+  
 
 
 @app.on_event("shutdown")
@@ -57,3 +59,4 @@ app.include_router(healthy_check_router)
 app.include_router(data_router)
 app.include_router(search_router)
 app.include_router(ai_services_router)
+app.include_router(chat_router)

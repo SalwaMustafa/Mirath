@@ -4,7 +4,7 @@
 
 Before running the project, make sure you have the following installed:
 
-- **Python 3.10+**
+- **Python 3.12+**
 - **Conda** (Anaconda or Miniconda)
 - **Git**
 - **Docker**  
@@ -34,12 +34,16 @@ pip install -r requirements.txt
 ### Configure environment variables:
 Edit the `.env` file with your API keys and configuration:
 ```env
-CONNECTION_URL=your_mongodb_connection_string
-DATABASE_NAME=your_database_name
-COHERE_API_KEY=your_api_key
-GEMINI_API_KEY=your_api_key
-QDRANT_URL=qdrant_connection_url
-DISTANCE_METHOD=select_an_appropriate_method(Cosine, Dot)
+CONNECTION_URL = your_mongodb_connection_string
+DATABASE_NAME = your_database_name
+COHERE_API_KEY = your_api_key
+GEMINI_API_KEY = your_api_key
+QDRANT_URL = qdrant_connection_url
+DISTANCE_METHOD = select_an_appropriate_method(Cosine, Dot)
+TAVILY_API_KEY = your_api_key
+GROQ_API_KEY = your_api_key
+PADDLE_OCR_URL = paddle_ocr_connection_url
+PADDLE_OCR_TOKEN = your_token
 ```
 
 ### Run Docker Compose Services
@@ -201,6 +205,173 @@ POST
 ```json
 {
   "response": "Cannot embed the provided text."
+}
+```
+**Status Code:** `400 Bad Request`
+
+## 6- POST /chat/{user_id}/{thread_id}
+
+### Description
+Handle chat interactions including text messages, voice transcription, and image text extraction. Processes the input and streams the assistant's response.
+### Method
+`POST`
+### Body
+Form data with the following fields:
+- `message` (optional): Text message from the user.
+- `voice` (optional): Audio file for transcription.
+- `image` (optional): Image file for text extraction.
+### Success Response
+Streaming response with the assistant's reply using Server-Sent Events (SSE) format.
+**Media Type:** `text/event-stream`
+
+**Status Code:** `200 OK`
+
+#### Streaming Response Events
+
+The response will contain multiple SSE events with the following structure:
+
+**1. Metadata Event (for the first message only):**
+```
+data: {"type": "metadata", "chat_title": "Generated chat title"}
+
+```
+
+**2. Content Chunks (multiple events):**
+```
+data: {"type": "chunk", "content": "Assistant response content"}
+
+```
+
+**3. Completion Event:**
+```
+data: {"type": "end", "content": "Streaming completed successfully."}
+
+```
+
+**4. Error Event (if an error occurs):**
+```
+data: {"type": "error", "content": "An error occurred during streaming."}
+
+```
+
+
+### Error Responses
+```json
+{
+  "Response_signal": "No input provided. Please provide text, audio, or an image."
+}
+```
+**Status Code:** `400 Bad Request`
+```json
+{
+  "Response_signal": "Failed to process the image for OCR."
+}
+```
+**Status Code:** `400 Bad Request`
+```json
+{
+  "Response_signal": "Failed to transcribe the audio file."
+}
+```
+**Status Code:** `400 Bad Request`
+```json
+{
+  "Response_signal": "Failed to generate chat title."
+}
+```
+**Status Code:** `400 Bad Request`
+
+
+## 7- POST /rename/chat
+
+### Description
+Rename the title of an existing chat thread.
+### Method
+`POST`
+### Body
+```json
+{
+  "thread_id": "thread_id_1",
+  "new_title": "new_title",
+  "user_id": "user_id_1"
+}
+```
+### Success Response
+```json
+{
+  "Response_signal": "Chat title renamed successfully."
+}
+```
+**Status Code:** `200 OK`
+
+### Error Responses
+```json
+{
+  "Response_signal": "Failed to rename chat title."
+}
+```
+**Status Code:** `400 Bad Request`
+
+## 8- DELETE /temporary/chat
+
+### Description
+Delete a temporary chat thread by its thread ID.
+### Method
+`DELETE`
+### Body
+```json
+{
+  "thread_id": "thread_id_1"
+}
+```
+### Success Response
+```json
+{
+  "Response_signal": "Chat deleted successfully."
+}
+```
+**Status Code:** `200 OK`
+
+### Error Responses
+```json
+{
+  "Response_signal": "Failed to delete chat."
+}
+```
+**Status Code:** `400 Bad Request`
+
+## 9- POST /AI/Services
+
+### Description
+Execute various AI services including explanation, translation, and summarization tasks.
+### Method
+`POST`
+### Body
+```json
+{
+  "service": "service_type",
+  "input_text": "text_to_process",
+  "target_language": "language_code"
+}
+```
+
+**Parameters:**
+- `service`: Type of AI service to execute ("explain", "summarize_snippet", "translate")
+- `input_text`: The text content to be processed by the service.
+- `target_language`(optional): Target language for translation task.
+
+### Success Response
+```json
+{
+  "answer": "generated_response"
+}
+```
+**Status Code:** `200 OK`
+
+### Error Responses
+```json
+{
+  "answer": "Failed to generate a response."
 }
 ```
 **Status Code:** `400 Bad Request`

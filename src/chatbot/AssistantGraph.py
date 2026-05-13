@@ -9,10 +9,13 @@ import asyncio
 
 class AssistantGraph:
 
-    def __init__(self, memory, sleep_time: int = 45):
+    def __init__(self, memory, sleep_time: int = 5):
 
         self.llm = get_model()
         self.memory = memory
+        self.tools = get_research_tools()
+        self.tool_node = ToolNode(self.tools)
+        self.llm_with_tools = self.llm.bind_tools(self.tools)
         self.sleep_time = sleep_time
         self.assistant_graph = self._create_workflow()
 
@@ -52,8 +55,7 @@ class AssistantGraph:
             messages = state.get("messages", [])
         )
         
-        llm_with_tools = self.llm.bind_tools(get_research_tools())
-        response = await llm_with_tools.ainvoke(messages)
+        response = await self.llm_with_tools.ainvoke(messages)
         await asyncio.sleep(self.sleep_time)
 
         
@@ -164,8 +166,7 @@ class AssistantGraph:
             messages = state.get("messages", [])
         )
 
-        llm_with_tools = self.llm.bind_tools(get_research_tools())
-        response = await llm_with_tools.ainvoke(messages)
+        response = await self.llm_with_tools.ainvoke(messages)
         await asyncio.sleep(self.sleep_time)
         
         return {
@@ -198,7 +199,7 @@ class AssistantGraph:
         eval_result = await evaluator.ainvoke(messages)
         await asyncio.sleep(self.sleep_time)
         
-        if eval_result.is_satisfactory == AssistantEnum.PASS.value or state["reflexion_count"] >=1:
+        if eval_result.is_satisfactory == AssistantEnum.PASS.value or state.get("reflexion_count", 0) >=1:
             return {"next_step": AssistantEnum.END.value, "reflexion_count": 0}
         
         
@@ -207,7 +208,15 @@ class AssistantGraph:
             "messages": [HumanMessage(content=feedback_msg,
                                       additional_kwargs={"type": "Reflexion"} )],
             "next_step": AssistantEnum.RETRY.value,
-            "reflexion_count": state["reflexion_count"] + 1
+            "reflexion_count": state.get("reflexion_count", 0) + 1,
+            "tool_call_count" :0
+        }
+    
+    async def tools_node_wrapper(self, state):
+        result = await self.tool_node.ainvoke(state)
+        return {
+            **result,
+            "tool_call_count": state.get("tool_call_count", 0) + 1 
         }
         
 
@@ -224,9 +233,14 @@ class AssistantGraph:
     
 
     def post_generation_condition(self, state):
+
+        MAX_TOOL_CALLS = 3
+        tool_call_count = state.get("tool_call_count", 0)
     
         last_msg = state["messages"][-1]
         if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+            if tool_call_count >= MAX_TOOL_CALLS:
+                return "reflexion"  
             return "tools"
         
         return "reflexion"
@@ -261,7 +275,7 @@ class AssistantGraph:
         workflow.add_node("reflexion", self.reflexion_node)
         
         
-        workflow.add_node("tools", ToolNode(get_research_tools()))
+        workflow.add_node("tools", self.tools_node_wrapper)
 
         workflow.set_entry_point("router")
 

@@ -66,7 +66,7 @@ async def chat(request:Request, user_id: str, thread_id:str, message: Optional[s
 
     prompt = "\n".join(prompt_parts).strip()
 
-    is_chat_exists = await chat_controller.is_chat_exists(thread_id)
+    is_chat_exists = await chat_controller.is_chat_exists(thread_id=thread_id, user_id=user_id)
 
     if not is_chat_exists:
         try:
@@ -91,7 +91,8 @@ async def chat(request:Request, user_id: str, thread_id:str, message: Optional[s
 
     return StreamingResponse(
         chat_controller.stream_generator(prompt=prompt, thread_id=thread_id, 
-                                         graph=request.app.assistant_graph, chat_title=chat_title),
+                                         graph=request.app.assistant_graph, chat_title=chat_title, 
+                                         generation_client=request.app.generation_client),
         media_type="text/event-stream"
     )
     
@@ -101,28 +102,29 @@ async def chat(request:Request, user_id: str, thread_id:str, message: Optional[s
 async def rename_chat_title(request:Request, chat_metadata: RenameChat):
 
     chat_controller = ChatController(db_client = request.app.db_client)
-    try:
+  
 
-        _= await chat_controller.save_chat_metadata({
-                            "thread_id": chat_metadata.thread_id,
-                            "title": chat_metadata.new_title,
-                            "user_id": chat_metadata.user_id
-                        })
-
-    except Exception:
+    is_renamed= await chat_controller.rename_chat({
+                        "thread_id": chat_metadata.thread_id,
+                        "title": chat_metadata.new_title,
+                        "user_id": chat_metadata.user_id
+                    })
+    if is_renamed:
         return JSONResponse(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        content = {
-                            "Response_signal": ResponseEnum.CHAT_RENAME_FAILURE.value
-                            }
-                        )
+                    status_code=status.HTTP_200_OK,
+                    content = {
+                        "Response_signal": ResponseEnum.CHAT_RENAME_SUCCESS.value
+                        }
+                    )
 
     return JSONResponse(
-                        status_code=status.HTTP_200_OK,
-                        content = {
-                            "Response_signal": ResponseEnum.CHAT_RENAME_SUCCESS.value
-                            }
-                        )
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content = {
+                        "Response_signal": ResponseEnum.CHAT_RENAME_FAILURE.value
+                        }
+                    )
+
+    
 
 
 @chat_router.delete("/temporary/chat")

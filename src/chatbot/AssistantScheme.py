@@ -64,3 +64,4 @@ class AgentState(TypedDict):
     next_step: str
     reflexion_count: int
     agent_type: str
+    tool_call_count: int

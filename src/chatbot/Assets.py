@@ -17,15 +17,16 @@ def get_model():
 
 def get_arxiv_tool():
     wrapper = ArxivAPIWrapper(
-        top_k_results = 1,
-        doc_content_chars_max = 1000
+        top_k_results = 3,
+        doc_content_chars_max = 1000,
+        arxiv_search_sleep_time=3
     )
     return ArxivQueryRun(api_wrapper = wrapper)
 
 
 def get_tavily_tool():
     
-    return TavilySearch(tavily_api_key = settings.TAVILY_API_KEY, max_results = 1)
+    return TavilySearch(tavily_api_key = settings.TAVILY_API_KEY, max_results = 3)
 
 
 def get_research_tools():

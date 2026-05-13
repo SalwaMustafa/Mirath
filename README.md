@@ -232,23 +232,28 @@ The response will contain multiple SSE events with the following structure:
 
 **1. Metadata Event (for the first message only):**
 ```
-data: {"type": "metadata", "chat_title": "Generated chat title"}
+data: {"type": "chat_title", "content": "Generated chat title"}
 
 ```
 
-**2. Content Chunks (multiple events):**
+**2. Current Status (multiple events):**
 ```
-data: {"type": "chunk", "content": "Assistant response content"}
+data: {"type": "status", "content": "The current status of the model"}
+
+```
+**3. Model Answer Event:**
+```
+data: {"type": ""model_answer"", "content": "The final answer of the model"}
 
 ```
 
-**3. Completion Event:**
+**4. Completion Event:**
 ```
 data: {"type": "end", "content": "Streaming completed successfully."}
 
 ```
 
-**4. Error Event (if an error occurs):**
+**5. Error Event (if an error occurs):**
 ```
 data: {"type": "error", "content": "An error occurred during streaming."}
 

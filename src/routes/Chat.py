@@ -89,12 +89,9 @@ async def chat(request:Request, user_id: str, thread_id:str, message: Optional[s
             "user_id": user_id
         })
 
-    return StreamingResponse(
-        chat_controller.stream_generator(prompt=prompt, thread_id=thread_id, 
-                                         graph=request.app.assistant_graph, chat_title=chat_title, 
-                                         generation_client=request.app.generation_client),
-        media_type="text/event-stream"
-    )
+    return StreamingResponse(chat_controller.stream_generator(prompt=prompt, thread_id=thread_id, 
+                                         graph=request.app.assistant_graph, chat_title=chat_title), 
+                                         media_type="text/event-stream")
     
     
 

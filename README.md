@@ -18,7 +18,7 @@ cd project-folder
 ```
 2️- Create a new environment:
 ```bash
-conda create -n env-name python=3.10
+conda create -n env-name python=3.12
 ```
 3️- Activate the environment:
 ```bash
@@ -219,7 +219,7 @@ Handle chat interactions including text messages, voice transcription, and image
 Form data with the following fields:
 - `message` (optional): Text message from the user.
 - `voice` (optional): Audio file for transcription.
-- `image` (optional): Image file for text extraction.
+- `image` (optional): Image file for text extraction [OCR only].
 ### Success Response
 Streaming response with the assistant's reply using Server-Sent Events (SSE) format.
 **Media Type:** `text/event-stream`

@@ -202,6 +202,8 @@ REFLEXION_GENERAL_PROMPT = ChatPromptTemplate.from_messages([
         **REASONING:** Brief explanation of why you made this decision.
         **FEEDBACK:** Specific instructions to the generator on what to fix. 
 
+        **If the model do not have the knowledge to answer the question Force it to use its tools to answer**
+
         """
       ),
     MessagesPlaceholder(variable_name="messages")

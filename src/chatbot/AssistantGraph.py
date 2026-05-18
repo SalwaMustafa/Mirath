@@ -6,6 +6,7 @@ from .AssistantPrompts import ROUTER_SYSTEM_MESSAGE, GENERAL_ASSISTANT_PROMPT, R
 from .AssistantEnum import AssistantEnum
 from .Assets import get_research_tools, get_model
 import asyncio
+import logging
 
 class AssistantGraph:
 
@@ -18,6 +19,7 @@ class AssistantGraph:
         self.llm_with_tools = self.llm.bind_tools(self.tools)
         self.sleep_time = sleep_time
         self.assistant_graph = self._create_workflow()
+        self.logger = logging.getLogger(__name__)
 
 
     async def router_node(self, state: AgentState):
@@ -55,7 +57,18 @@ class AssistantGraph:
             messages = state.get("messages", [])
         )
         
-        response = await self.llm_with_tools.ainvoke(messages)
+        try:
+
+            response = await asyncio.wait_for(
+                self.llm_with_tools.ainvoke(messages),
+                timeout=60
+            )
+
+        except Exception as e:
+            self.logger.exception(f"Tool-enabled model failed: {e}")
+
+            response = await self.llm.ainvoke(messages)
+
         await asyncio.sleep(self.sleep_time)
 
         
@@ -152,8 +165,8 @@ class AssistantGraph:
         Ensures a narrative flow connecting the evolution of ideas in the roadmap.
 
         """
-        reqs = state["roadmap_reqs"] or RoadmapRequirements()
-        profile = state["user_profile"] or UserProfile()
+        reqs = state.get("roadmap_reqs") or RoadmapRequirements()
+        profile = state.get("user_profile") or UserProfile()
         
         
         messages = ROADMAP_SYSTEM_PROMPT.format_messages(
@@ -166,7 +179,18 @@ class AssistantGraph:
             messages = state.get("messages", [])
         )
 
-        response = await self.llm_with_tools.ainvoke(messages)
+        try:
+
+            response = await asyncio.wait_for(
+                self.llm_with_tools.ainvoke(messages),
+                timeout=60
+            )
+
+        except Exception as e:
+            self.logger.exception(f"Tool-enabled model failed: {e}")
+
+            response = await self.llm.ainvoke(messages)
+
         await asyncio.sleep(self.sleep_time)
         
         return {

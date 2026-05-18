@@ -75,7 +75,7 @@ class ChatController:
     
 
     
-    async def stream_generator(self, prompt: str, thread_id: str, graph, chat_title: str = None,generation_client = None):
+    async def stream_generator(self, prompt: str, thread_id: str, graph, chat_title: str = None):
         if chat_title:
                 yield f"data: {json.dumps({
                     'type': 'chat_title',
@@ -114,25 +114,25 @@ class ChatController:
                         if isinstance(last_message, AIMessage) and last_message.content:
                             final_response = last_message.content
 
-            
-        except Exception as e:
-            self.logger.error(f"Error during streaming: {e}")
-            try:
-                pass
-            
-            except Exception as e:
-                yield f"data: {json.dumps({
-                    'type': 'error',
-                    'content': ResponseEnum.STREAMING_FAILURE.value
-                })}\n\n"
-        
-        if final_response:
+            if final_response:
+
                 yield f"data: {json.dumps({
                     'type': 'model_answer',
                     'content': final_response
                 })}\n\n"
 
-        yield f"data: {json.dumps({
-            'type': 'end',
-            'content': ResponseEnum.STREAMING_SUCCESS.value 
-        })}\n\n"
+            yield f"data: {json.dumps({
+                'type': 'end',
+                'content': ResponseEnum.STREAMING_SUCCESS.value 
+            })}\n\n"
+
+            
+        except Exception as e:
+            self.logger.error(f"Error during streaming: {e}")
+            
+            yield f"data: {json.dumps({
+                'type': 'error',
+                'content': ResponseEnum.STREAMING_FAILURE.value
+            })}\n\n"
+        
+        

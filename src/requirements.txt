@@ -18,3 +18,4 @@ langgraph-checkpoint-mongodb==0.3.1
 langchain-google-genai==4.2.2
 langchain-paddleocr==0.1.0
 groq==1.2.0
+tavily-python==0.7.24

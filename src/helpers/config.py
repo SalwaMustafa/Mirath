@@ -40,6 +40,7 @@ class settings(BaseSettings):
     PADDLE_OCR_URL: str
     PADDLE_OCR_TOKEN: str
 
+    AUDIO_ALLOWED_TYPES: List[str]
     AUDIO_MAX_SIZE: int
 
     IMAGE_ALLOWED_TYPES: List[str]

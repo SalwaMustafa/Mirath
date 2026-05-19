@@ -115,10 +115,21 @@ class ChatController:
                             final_response = last_message.content
 
             if final_response:
+                if isinstance(final_response, list):
+
+                    text_content = "\n".join(
+                        block.get("text", "")
+                        for block in final_response
+                        if isinstance(block, dict)
+                        and block.get("type") == "text"
+                    )
+
+                else:
+                    text_content = final_response
 
                 yield f"data: {json.dumps({
                     'type': 'model_answer',
-                    'content': final_response
+                    'content': text_content
                 })}\n\n"
 
             yield f"data: {json.dumps({

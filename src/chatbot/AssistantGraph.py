@@ -1,8 +1,8 @@
 from langgraph.graph import StateGraph, END
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, SystemMessage
 from langgraph.prebuilt import ToolNode
 from .AssistantScheme import UserProfile, RoadmapRequirements, ExtractionSchema, RouteQuery, EvaluationResult, AgentState
-from .AssistantPrompts import ROUTER_SYSTEM_MESSAGE, GENERAL_ASSISTANT_PROMPT, ROADMAP_GUARDIAN_PROMPT, ROADMAP_SYSTEM_PROMPT, REFLEXION_ROADMAP_PROMPT, REFLEXION_GENERAL_PROMPT
+from .AssistantPrompts import ROUTER_SYSTEM_MESSAGE, GENERAL_ASSISTANT_PROMPT, ROADMAP_GUARDIAN_PROMPT, ROADMAP_SYSTEM_PROMPT, REFLEXION_PROMPT
 from .AssistantEnum import AssistantEnum
 from .Assets import get_research_tools, get_model
 import asyncio
@@ -21,6 +21,9 @@ class AssistantGraph:
         self.assistant_graph = self._create_workflow()
         self.logger = logging.getLogger(__name__)
 
+    def get_windowed_messages(self, state: AgentState, max_messages: int = 10) -> list:
+        messages = state.get("messages", [])
+        return messages[-max_messages:]
 
     async def router_node(self, state: AgentState):
         """
@@ -32,7 +35,7 @@ class AssistantGraph:
         """
 
         structured_llm = self.llm.with_structured_output(RouteQuery)
-        messages  = ROUTER_SYSTEM_MESSAGE.format_messages(messages = state.get("messages", []))
+        messages  = ROUTER_SYSTEM_MESSAGE.format_messages(messages = self.get_windowed_messages(state))
         decision = await structured_llm.ainvoke(messages)
         await asyncio.sleep(self.sleep_time)
 
@@ -54,7 +57,7 @@ class AssistantGraph:
             level=profile.research_level or "Not specified",
             field=profile.field_of_interest or "Not specified",
             language=profile.preferred_language,
-            messages = state.get("messages", [])
+            messages = self.get_windowed_messages(state)
         )
         
         try:
@@ -96,7 +99,7 @@ class AssistantGraph:
             level=current_profile.research_level,
             time_frame=current_reqs.time_frame,
             field=current_profile.field_of_interest or "Not specified",
-            messages = state.get("messages", []))
+            messages = self.get_windowed_messages(state))
         
         extraction = await extractor.ainvoke(messages) or ExtractionSchema()
         await asyncio.sleep(self.sleep_time)
@@ -176,7 +179,7 @@ class AssistantGraph:
             time_frame=reqs.time_frame,
             field=profile.field_of_interest or "Not specified",
             language=profile.preferred_language,
-            messages = state.get("messages", [])
+            messages = self.get_windowed_messages(state)
         )
 
         try:
@@ -207,17 +210,8 @@ class AssistantGraph:
         Evaluates the last response based on accuracy, detail, and citations.
 
         """
-
-        agent_type = state.get("agent_type")
         
-        if agent_type == AssistantEnum.ROADMAP_GENERATOR.value:
-            messages = REFLEXION_ROADMAP_PROMPT.format_messages(
-                research_level = state["user_profile"].research_level,
-                field = state["user_profile"].field_of_interest or "Not specified",
-                messages = state.get("messages", [])
-                )
-        else:
-            messages = REFLEXION_GENERAL_PROMPT.format_messages(messages = state["messages"])
+        messages = REFLEXION_PROMPT.format_messages(messages = self.get_windowed_messages(state))
         
         evaluator = self.llm.with_structured_output(EvaluationResult)
         eval_result = await evaluator.ainvoke(messages)
@@ -228,12 +222,14 @@ class AssistantGraph:
         
         
         feedback_msg = f"Reflexion Reasoning: {eval_result.reasoning} and Feedback: {eval_result.feedback}."
-        return {
-            "messages": [HumanMessage(content=feedback_msg,
-                                      additional_kwargs={"type": "Reflexion"} )],
-            "next_step": AssistantEnum.RETRY.value,
-            "reflexion_count": state.get("reflexion_count", 0) + 1,
-            "tool_call_count" :0
+
+        return {"messages": [SystemMessage(content="\n".join([feedback_msg,
+                                                             "Do not mention this feedback to the user.",
+                                                             "Return only the enhanced response based on this feedback."]))],
+
+                "next_step": AssistantEnum.RETRY.value,
+                "reflexion_count": state.get("reflexion_count", 0) + 1,
+                "tool_call_count" :0
         }
     
     async def tools_node_wrapper(self, state):

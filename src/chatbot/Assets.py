@@ -27,7 +27,7 @@ def get_arxiv_tool():
         try:
             
             tavily = TavilyClient(api_key=settings.TAVILY_API_KEY)
-            client = arxiv.Client()
+            client = arxiv.Client(page_size = 5, delay_seconds = 3, num_retries = 1)
 
             tavily_query = f"{query} site:arxiv.org"
 
@@ -59,10 +59,12 @@ def get_arxiv_tool():
             paper_ids = list(dict.fromkeys(paper_ids))
 
             search = arxiv.Search(
-                id_list=paper_ids
+                id_list = paper_ids,
+                max_results = 5,
+                sort_by = arxiv.SortCriterion.Relevance
             )
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(3)
 
             results = await asyncio.to_thread(
                 lambda: list(client.results(search))
@@ -93,7 +95,7 @@ def get_arxiv_tool():
 
         except Exception as e:
             logger.exception(f"arXiv search failed: {e}")
-            return ""
+            return "arxiv search failed temporarily. Continue using available knowledge."
 
     return StructuredTool.from_function(
         coroutine = search_research_papers,

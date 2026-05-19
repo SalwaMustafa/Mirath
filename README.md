@@ -220,6 +220,17 @@ Form data with the following fields:
 - `message` (optional): Text message from the user.
 - `voice` (optional): Audio file for transcription.
 - `image` (optional): Image file for text extraction [OCR only].
+
+### Supported File Types and Size Limits
+
+#### Image File Types
+- **Allowed types:** `image/jpeg`, `image/png`, `image/webp`, `image/tiff`
+- **Maximum size:** 5 MB
+
+#### Voice/Audio File Types
+- **Allowed types:** `audio/mpeg`, `audio/mp3`, `audio/mp4`, `audio/x-m4a`, `audio/wav`, `audio/webm`, `audio/ogg`, `audio/flac`
+- **Maximum size:** 5 MB
+
 ### Success Response
 Streaming response with the assistant's reply using Server-Sent Events (SSE) format.
 **Media Type:** `text/event-stream`

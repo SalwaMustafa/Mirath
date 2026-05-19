@@ -40,6 +40,15 @@ async def chat(request:Request, user_id: str, thread_id:str, message: Optional[s
             transcription, voice_response_signal = await nlp_controller.trascribe_audio(
                 voice, request.app.audio_client
             )
+
+            if transcription == None:
+                return JSONResponse(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        content = {
+                            "Response_signal": voice_response_signal
+                            }
+                        )
+            
             prompt_parts.append(f"Transcription: {transcription}")
         except Exception as e:
             return JSONResponse(
@@ -54,6 +63,15 @@ async def chat(request:Request, user_id: str, thread_id:str, message: Optional[s
         try:
 
             image_text, image_response_signal = await nlp_controller.extract_text_from_image(image)
+
+            if image_text == None:
+                return JSONResponse(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        content = {
+                            "Response_signal": image_response_signal
+                            }
+                        )
+            
             prompt_parts.append(f"Image Text: {image_text}")
 
         except Exception as e:

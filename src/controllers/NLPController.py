@@ -143,6 +143,10 @@ class NLPController:
             self.logger.error(f"Audio file size exceeds the maximum limit of {self.settings.AUDIO_MAX_SIZE} bytes.")
             return None, ResponseEnum.FILE_TOO_LARGE.value
         
+        if voice.content_type not in self.settings.AUDIO_ALLOWED_TYPES:
+            self.logger.error(f"Unsupported audio format: {voice.content_type}.")
+            return None, ResponseEnum.INVALID_FILE_FORMAT.value 
+        
         try:
             audio_bytes = await voice.read()
 

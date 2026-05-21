@@ -95,6 +95,8 @@ GENERAL_ASSISTANT_PROMPT = ChatPromptTemplate.from_messages([
         - user asks for a specific year (e.g., 2026) that is not in your training data
         - the topic involves releases/news/companies/tools
 
+        **If arxiv_search is unavailable, you can use tavily_search to find papers and answer the user question**
+
         Do NOT use tools for:
         - basic explanations or common concepts
 
@@ -151,7 +153,8 @@ ROADMAP_SYSTEM_PROMPT = ChatPromptTemplate.from_messages([
     
         ### Narrative Flow
         End each phase with a 2–3 sentence "bridge" that connects it to the next phase and explains why that progression makes sense intellectually.
-        
+
+        **If arxiv_search is unavailable, you can use tavily_search to find papers and answer the user question**
         """
       ),
     MessagesPlaceholder(variable_name="messages")

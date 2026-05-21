@@ -4,7 +4,7 @@ from langgraph.prebuilt import ToolNode
 from .AssistantScheme import UserProfile, RoadmapRequirements, ExtractionSchema, RouteQuery, EvaluationResult, AgentState
 from .AssistantPrompts import ROUTER_SYSTEM_MESSAGE, GENERAL_ASSISTANT_PROMPT, ROADMAP_GUARDIAN_PROMPT, ROADMAP_SYSTEM_PROMPT, REFLEXION_PROMPT
 from .AssistantEnum import AssistantEnum
-from .Assets import get_research_tools, get_model
+from .Assets import ResearchTools
 import asyncio
 import logging
 
@@ -12,9 +12,10 @@ class AssistantGraph:
 
     def __init__(self, memory, sleep_time: int = 5):
 
-        self.llm = get_model()
+        self.assets = ResearchTools() 
+        self.llm = self.assets.get_model()
         self.memory = memory
-        self.tools = get_research_tools()
+        self.tools = self.assets.get_research_tools()
         self.tool_node = ToolNode(self.tools)
         self.llm_with_tools = self.llm.bind_tools(self.tools)
         self.sleep_time = sleep_time

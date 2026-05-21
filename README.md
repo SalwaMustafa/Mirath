@@ -1,4 +1,163 @@
 # Mirath
+A smart research assistant application designed to help students, researchers, and anyone interested in academic research discover papers, explore research topics, and interact with AI-powered tools.
+
+## Key Features
+- Collected and stored research papers using **CrewAI** and **MongoDB**.
+- Implemented **semantic search** using **Cohere Embeddings** and **QdrantDB** to retrieve relevant papers based on user queries.
+- Built an AI chatbot using **LangGraph** and **Gemini** that can:
+  - Answer general research-related questions.
+  - Generate personalized learning roadmaps.
+  - Supported multimodal inputs:
+    - Extract text from images using **PaddleOCR**.
+    - Convert voice to text using **Whisper**.
+- Added helper features for research paper reading:
+  - Text translation.
+  - Text summarization.
+  - Concept explanation.
+## Upcoming Features
+- Fine-tuned summarization model for structured scientific paper summarization across key facets:
+  - Purpose
+  - Method
+  - Findings
+  - Value
+- AI-powered recommendation system for retrieving relevant research papers.
+
+## Tech Stack
+- Python, FastAPI 
+- Langchain, LangGraph, CrewAI 
+- QdrantDB, MongoDB 
+- Cohere, Gemini, PaddleOCR, Whisper 
+- Docker 
+
+## Project File Tree
+
+```markdown
+├── 📂 docker
+│  ├── 📄 __init__.py
+│  ├── 📄 .env
+│  ├── 📄 .env.example
+│  ├── 📄 .gitignore
+│  ├── ⚙️ docker-compose.yml
+│  └── 📄 Dockerfile
+├── 📂 facets_summarization
+│  ├── 📄 __init__.py
+│  ├── 📄 data_pre_evaluation.ipynb
+│  └── 📄 data_preprocessing.ipynb
+├── 📂 ScrapingDataCrew
+│  ├── 📂 Agents
+│  │  ├── 📂 scheme
+│  │  │  ├── 📄 __init__.py
+│  │  │  ├── 📄 Categories.py
+│  │  │  ├── 📄 Links.py
+│  │  │  └── 📄 PaperContent.py
+│  │  ├── 📂 tools
+│  │  │  ├── 📄 __init__.py
+│  │  │  ├── 📄 FetchCategory.py
+│  │  │  ├── 📄 FetchPaperLinks.py
+│  │  │  └── 📄 ScrapePaper.py
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 CollectCategory.py
+│  │  ├── 📄 ScrapePaper.py
+│  │  └── 📄 SearchPapers.py
+│  ├── 📂 CrewArtifactsEX
+│  │  ├── 📄 __init__.py
+│  │  ├── ⚙️ CategoryCollection.json
+│  │  ├── ⚙️ ResearchLinks.json
+│  │  └── ⚙️ ScrapePapers.json
+│  ├── 📄 .env.example
+│  ├── 📄 model.py
+│  ├── 📄 requirements.txt
+│  └── 📄 RunCrew.py
+├── 📂 src
+│  ├── 📂 assets
+│  │  ├── 📂 data
+│  │  ├── 📂 vectordb
+│  │  │  └── 📂 qdrant_data
+│  │  ├── 📄 __init__.py
+│  │  └── 📄 .gitignore
+│  ├── 📂 chatbot
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 Assets.py
+│  │  ├── 📄 AssistantEnum.py
+│  │  ├── 📄 AssistantGraph.py
+│  │  ├── 📄 AssistantPrompts.py
+│  │  └── 📄 AssistantScheme.py
+│  ├── 📂 controllers
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 BaseController.py
+│  │  ├── 📄 ChatController.py
+│  │  ├── 📄 NLPController.py
+│  │  ├── 📄 PapersController.py
+│  │  └── 📄 UploadDataController.py
+│  ├── 📂 enums
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 DatabaseEnum.py
+│  │  ├── 📄 FileExtensionEnum.py
+│  │  └── 📄 ResponseEnum.py
+│  ├── 📂 helpers
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 config.py
+│  │  ├── 📄 ocr_config.py
+│  │  ├── 📄 services_config.py
+│  │  └── 📄 stream_config.py
+│  ├── 📂 llm
+│  │  ├── 📂 providers
+│  │  │  ├── 📄 __init__.py
+│  │  │  ├── 📄 CohereProvider.py
+│  │  │  └── 📄 GeminiProvider.py
+│  │  ├── 📂 templates
+│  │  │  ├── 📂 locales
+│  │  │  │  ├── 📂 ar
+│  │  │  │  │  ├── 📄 __init__.py
+│  │  │  │  │  ├── 📄 explain.py
+│  │  │  │  │  ├── 📄 generate_title.py
+│  │  │  │  │  ├── 📄 summarize_snippet.py
+│  │  │  │  │  └── 📄 translate.py
+│  │  │  │  ├── 📂 en
+│  │  │  │  │  ├── 📄 __init__.py
+│  │  │  │  │  ├── 📄 explain.py
+│  │  │  │  │  ├── 📄 generate_title.py
+│  │  │  │  │  ├── 📄 summarize_snippet.py
+│  │  │  │  │  └── 📄 translate.py
+│  │  │  │  └── 📄 __init__.py
+│  │  │  ├── 📄 __init__.py
+│  │  │  └── 📄 TemplateParser.py
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 LLMEnums.py
+│  │  ├── 📄 LLMInterface.py
+│  │  └── 📄 LLMProviderFactory.py
+│  ├── 📂 routes
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 AI_Services.py
+│  │  ├── 📄 Chat.py
+│  │  ├── 📄 Data.py
+│  │  ├── 📄 Healthy_Check.py
+│  │  └── 📄 Search.py
+│  ├── 📂 scheme
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 AI_Services.py
+│  │  ├── 📄 Chat.py
+│  │  ├── 📄 Data.py
+│  │  └── 📄 Search.py
+│  ├── 📂 vectordb
+│  │  ├── 📂 providers
+│  │  │  ├── 📄 __init__.py
+│  │  │  └── 📄 QdrantProvider.py
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 VectorDBEnum.py
+│  │  ├── 📄 VectorDBFactory.py
+│  │  └── 📄 VectorDBInterface.py
+│  ├── 📄 __init__.py
+│  ├── 📄 .env
+│  ├── 📄 .env.example
+│  ├── 📄 main.py
+│  └── 📄 requirements.txt
+├── 📄 __init__.py
+├── 📄 .gitignore
+├── 📄 LICENSE
+└── 📜 README.md
+
+```
 
 ## Prerequisites
 
@@ -280,6 +439,18 @@ data: {"type": "error", "content": "An error occurred during streaming."}
 **Status Code:** `400 Bad Request`
 ```json
 {
+  "Response_signal": "Unsupported file format."
+}
+```
+**Status Code:** `400 Bad Request`
+```json
+{
+  "Response_signal": "File size exceeds the maximum limit."
+}
+```
+**Status Code:** `400 Bad Request`
+```json
+{
   "Response_signal": "Failed to process the image for OCR."
 }
 ```
@@ -391,3 +562,9 @@ Execute various AI services including explanation, translation, and summarizatio
 }
 ```
 **Status Code:** `400 Bad Request`
+
+
+## Contributors
+
+- [Salwa Mustafa](https://github.com/SalwaMustafa) 
+- [Rawan Osama](https://github.com/Rawanelmoafy)

@@ -40,9 +40,17 @@ A smart research assistant application designed to help students, researchers, a
 │  ├── ⚙️ docker-compose.yml
 │  └── 📄 Dockerfile
 ├── 📂 facets_summarization
+│  ├── 📂 images
+│  │  ├── 📄 __init__.py
+│  │  ├── 📄 eval.png
+│  │  ├── 📄 system.png
+│  │  └── 📄 train.png
 │  ├── 📄 __init__.py
+│  ├── 📄 data_post_evaluation.ipynb
 │  ├── 📄 data_pre_evaluation.ipynb
-│  └── 📄 data_preprocessing.ipynb
+│  ├── 📄 data_preprocessing.ipynb
+│  ├── 📄 model_training.yaml
+│  └── 📜 README.md
 ├── 📂 ScrapingDataCrew
 │  ├── 📂 Agents
 │  │  ├── 📂 scheme
